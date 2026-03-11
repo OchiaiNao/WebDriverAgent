@@ -9,14 +9,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Select Xcode 26
-        run: sudo xcode-select -s /Applications/Xcode_26.0.app || sudo xcode-select -s $(ls -d /Applications/Xcode*.app | tail -1)
+      - name: Select latest Xcode
+        run: |
+          ls /Applications/Xcode*.app
+          sudo xcode-select -s $(ls -d /Applications/Xcode*.app | sort -V | tail -1)
+          xcodebuild -version
 
-      - name: Show Xcode version
-        run: xcodebuild -version
-
-      - name: Install node deps
-        run: npm install
+      - name: Create WDA bundle resource
+        run: mkdir -p Resources/WebDriverAgent.bundle
 
       - name: Build WDA for real device
         run: |
@@ -29,12 +29,12 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             AD_HOC_CODE_SIGNING_ALLOWED=YES
 
-      - name: Remove embedded XCTest frameworks (iOS 17+ requirement)
+      - name: Remove embedded XCTest frameworks
         run: |
           APP_PATH=$(find /tmp/wda_build -name "WebDriverAgentRunner-Runner.app" | head -1)
-          echo "App path: $APP_PATH"
-          rm -rf "$APP_PATH/Frameworks/XC"*.framework || true
-          ls "$APP_PATH/Frameworks/"
+          echo "App: $APP_PATH"
+          ls "$APP_PATH/Frameworks/" || true
+          rm -rf "$APP_PATH"/Frameworks/XC*.framework || true
 
       - name: Package as IPA
         run: |
@@ -43,9 +43,8 @@ jobs:
           cp -r "$APP_PATH" /tmp/ipa_staging/Payload/
           cd /tmp/ipa_staging
           zip -r WDA_ios26.ipa Payload/
-          echo "IPA created"
 
-      - name: Upload IPA artifact
+      - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
           name: WDA_ios26

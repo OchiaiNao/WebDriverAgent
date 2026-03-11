@@ -5,15 +5,12 @@ on:
 
 jobs:
   build:
-    runs-on: macos-15
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
 
-      - name: Select latest Xcode
-        run: |
-          ls /Applications/Xcode*.app
-          sudo xcode-select -s $(ls -d /Applications/Xcode*.app | sort -V | tail -1)
-          xcodebuild -version
+      - name: Show Xcode version
+        run: xcodebuild -version
 
       - name: Create WDA bundle resource
         run: mkdir -p Resources/WebDriverAgent.bundle
@@ -32,7 +29,7 @@ jobs:
       - name: Remove embedded XCTest frameworks
         run: |
           APP_PATH=$(find /tmp/wda_build -name "WebDriverAgentRunner-Runner.app" | head -1)
-          echo "App: $APP_PATH"
+          echo "App path: $APP_PATH"
           ls "$APP_PATH/Frameworks/" || true
           rm -rf "$APP_PATH"/Frameworks/XC*.framework || true
 
